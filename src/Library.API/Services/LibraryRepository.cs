@@ -49,6 +49,11 @@ namespace Library.API.Services
             return _context.Authors.Any(a => a.Id == authorId);
         }
 
+        public bool BookExist(Guid authorId,Guid bookId)
+        {
+            return _context.Books.Any(x => x.AuthorId == authorId && x.Id == bookId);
+        }
+
         public void DeleteAuthor(Author author)
         {
             _context.Authors.Remove(author);
@@ -94,6 +99,14 @@ namespace Library.API.Services
         public bool Save()
         {
             return (_context.SaveChanges() >= 0);
+        }
+
+        public IEnumerable<Author> GetAuthors(IEnumerable<Guid> authorIds)
+        {
+            return _context.Authors.Where(a => authorIds.Contains(a.Id))
+               .OrderBy(a => a.FirstName)
+               .OrderBy(a => a.LastName)
+               .ToList();
         }
     }
 }
