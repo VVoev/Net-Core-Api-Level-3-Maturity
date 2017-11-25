@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Library.API.Entities;
+using Library.API.Helpers;
 using Library.API.Models;
 using Library.API.Services;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -56,6 +58,16 @@ namespace Library.API.Controllers
                 return BadRequest();
             }
 
+            if(book.Description == book.Title)
+            {
+                ModelState.AddModelError(nameof(BookForCreationDto), "Description should be different from title");
+            }
+
+            if (ModelState.IsValid == false)
+            {
+                return new UnProcessableEntityObjectsResult(ModelState);
+            }
+
             if (libraryRepository.AuthorExists(authorId) == false)
             {
                 return NotFound();
@@ -93,22 +105,34 @@ namespace Library.API.Controllers
         }
 
         [HttpPut("{bookId}")]
-        public IActionResult UpdateBookForAuthor(Guid authorId, Guid bookId, [FromBody] BookForUpdateDto bookBodyforUpdate)
+        public IActionResult UpdateBookForAuthor(Guid authorId, Guid bookId, [FromBody] BookForUpdateDto book)
         {
             if (bookId == null || authorId == null)
             {
                 return NotFound();
             }
 
+            if(book.Title == book.Description)
+            {
+                ModelState.AddModelError(nameof(BookForUpdateDto), "Description cannot be same as title");
+            }
+
+            if(ModelState.IsValid == false)
+            {
+                return new UnProcessableEntityObjectsResult(ModelState);
+            }
+
+
+
             if (libraryRepository.AuthorExists(authorId) == false)
             {
                 return NotFound();
             }
 
-            var book = libraryRepository.GetBookForAuthor(authorId, bookId);
-            if(book == null)   
+            var bookFromRepo = libraryRepository.GetBookForAuthor(authorId, bookId);
+            if(bookFromRepo == null)   
             {
-                var bookToAdd = Mapper.Map<Book>(bookBodyforUpdate);
+                var bookToAdd = Mapper.Map<Book>(bookFromRepo);
                 bookToAdd.Id = new Guid();
 
                 libraryRepository.AddBookForAuthor(authorId, bookToAdd);
@@ -124,7 +148,7 @@ namespace Library.API.Controllers
 
             var author = libraryRepository.GetAuthor(authorId);
             var bookForAuthorRepo = libraryRepository.GetBookForAuthor(authorId, bookId);
-            Mapper.Map(bookBodyforUpdate, bookForAuthorRepo);
+            Mapper.Map(bookFromRepo, bookForAuthorRepo);
 
             libraryRepository.UpdateBookForAuthor(bookForAuthorRepo);
 
@@ -134,6 +158,36 @@ namespace Library.API.Controllers
             }
 
             return Ok();
+        }
+
+        [HttpPatch("{id}")]
+        public IActionResult PartiallyUpdateBookForTheAuthor(Guid authorId,Guid id,[FromBody]JsonPatchDocument <BookForUpdateDto> patchDoc)
+        {
+            if(patchDoc == null)
+            {
+                BadRequest();
+            }
+
+            
+
+            var authorExist = libraryRepository.AuthorExists(authorId);
+            var bookExist = libraryRepository.BookExist(authorId, id);
+
+            if (authorExist== false || bookExist == false)
+            {
+                return NotFound();
+            }
+
+            var bookFromRepo = libraryRepository.GetBookForAuthor(authorId, id);
+            var bookToPatch = Mapper.Map<BookForUpdateDto>(bookFromRepo);
+            patchDoc.ApplyTo(bookToPatch);
+
+            Mapper.Map(bookToPatch,bookFromRepo);
+            libraryRepository.UpdateBookForAuthor(bookFromRepo);
+
+            libraryRepository.Save();
+
+            return NoContent();
         }
     }
 }
