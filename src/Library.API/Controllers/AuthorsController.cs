@@ -70,5 +70,29 @@ namespace Library.API.Controllers
             }
             return NotFound();
         }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteAuthor(Guid id)
+        {
+            if(id == null)
+            {
+                return BadRequest();
+            }
+
+            if(libraryRepository.AuthorExists(id) == false)
+            {
+                return NotFound();
+            }
+
+            var author = libraryRepository.GetAuthor(id);
+            libraryRepository.DeleteAuthor(author);
+
+            if(libraryRepository.Save() == false)
+            {
+                throw new Exception("Something bad happend");
+            }
+
+            return NoContent();
+        }
     }
 }
