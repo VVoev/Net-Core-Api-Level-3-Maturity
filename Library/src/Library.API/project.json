@@ -18,7 +18,9 @@
     "Microsoft.AspNetCore.Mvc.Formatters.Xml": "1.0.1",
     "Microsoft.Extensions.Logging.Debug": "1.0.1",
     "NLog.Extensions.Logging": "1.0.0-rtm-alpha5",
-    "System.Linq.Dynamic.Core": "1.0.6.9"
+    "System.Linq.Dynamic.Core": "1.0.6.9",
+    "AspNetCoreRateLimit": "1.0.5",
+    "Marvin.Cache.Headers": "1.1.0"
   },
 
   "tools": {
