@@ -180,7 +180,12 @@ namespace Library.API.Controllers
 
             var bookFromRepo = libraryRepository.GetBookForAuthor(authorId, id);
             var bookToPatch = Mapper.Map<BookForUpdateDto>(bookFromRepo);
-            patchDoc.ApplyTo(bookToPatch);
+            patchDoc.ApplyTo(bookToPatch,ModelState);
+
+            if(ModelState.IsValid == false)
+            {
+                return new UnProcessableEntityObjectsResult(ModelState);
+            }
 
             Mapper.Map(bookToPatch,bookFromRepo);
             libraryRepository.UpdateBookForAuthor(bookFromRepo);
